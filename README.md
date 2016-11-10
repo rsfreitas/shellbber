@@ -1,2 +1,4 @@
 # shellbber
-A java XMPP command line client.
+
+A XMPP command line client.
+
