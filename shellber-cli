@@ -33,21 +33,27 @@ def main():
                                                  __desc__)
 
     # Load readline configurations
+    app_input = input.Input()
+    app_input.message("help to details, quit to end the application")
+    loop = True
 
     # Start application internals
     # - signal monitoring
     # - logging
 
-    # main loop
-    app_input = input.Input()
-    cmd = ''
-
-    while cmd != 'quit':
+    # Main loop
+    while loop:
         cmd = app_input.readline()
+        print "DEBUG:",cmd
 
-        # Handle command
-        if cmd == 'help':
-            app_input.help()
+        loop = {
+            'help': app_input.help,
+            'quit': False,
+        }.get(cmd['command'], True)
+
+        # Our command requires a function call?
+        if callable(loop):
+            loop(cmd)
 
     return 0
 
