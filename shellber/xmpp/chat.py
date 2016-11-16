@@ -1,4 +1,3 @@
-#!/usr/bin/python
 
 #
 # Copyright (C) 2016 Rodrigo Freitas
@@ -18,33 +17,25 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import sys
+"""
+A module to handle XMPP protocol.
+"""
 
-from shellber.app import args
-from shellber.app import core
-
-__appname__ = 'shellber'
-__version__ = '0.1'
-__desc__ = 'A command line XMPP client.'
-
-def main():
-    # Read command line arguments
-    app_args = args.parse_command_line_arguments(__appname__, __version__,
-                                                 __desc__)
-
-    app = core.Application(app_args)
-
-    while app.run():
-        cmd = app.wait_for_command()
-        print "DEBUG:",cmd
-        app.handle_command(cmd)
-
-    return 0
+class Chat(object):
+    def __init__(self):
+        pass
 
 
+    def login(self):
+        pass
 
-if __name__ == '__main__':
-    sys.exit(main())
+
+    def logout(self):
+        pass
+
+
+    def message(self):
+        pass
 
 
 

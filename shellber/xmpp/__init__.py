@@ -17,31 +17,5 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 
-import yaml
-import commentjson as json
-
-def load(args):
-    """
-    """
-    if args.config is None:
-        filename = args.config
-    else:
-        filename = ''
-
-    with open(filename) as fd:
-        data = fd.read()
-
-    # Are we reading a JSON file?
-    try:
-        cfg = json.loads(data)
-    except json.JSONLibraryException:
-        # Or is it a YAML file?
-        try:
-            cfg = yaml.load(data)
-        except yaml.YAMLError:
-            return False
-
-    return True
-
-
+__all__ = []
 

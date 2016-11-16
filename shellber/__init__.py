@@ -18,8 +18,8 @@
 #
 
 __all__ = [
-    'args',
-    'config',
-    'input'
+    'app',
+    'ui',
+    'xmpp'
 ]
 

@@ -24,6 +24,8 @@ Functions to handle user input.
 import collections
 import readline
 
+import shellber.ui.ui as ui
+
 class _Completer(object):
     def __init__(self, options):
         self.options = sorted(options)
@@ -49,10 +51,15 @@ class _Completer(object):
 
 
 
-class _UserCommand(collections.Iterator):
+class _UserCommands(object):
     def __init__(self):
         self._commands = dict()
         self._populate_commands()
+        self._commands = collections.OrderedDict(sorted(self._commands.items()))
+
+
+    def __iter__(self):
+        return iter(self._commands)
 
 
     def _add_command(self, command, help_, description='', arguments=0):
@@ -67,28 +74,24 @@ class _UserCommand(collections.Iterator):
         self._add_command('register', 'Register a XMPP account.')
         self._add_command('login', 'Makes a login into a XMPP server.')
         self._add_command('msg', 'Sends a message to the active contact.')
-        self._add_command('help', 'Gets a help description from an internal \
-command or this screen.')
-
         self._add_command('list', 'Show all contacts from the user roster.')
         self._add_command('quit', 'Quits application.')
         self._add_command('logout', 'Makes the logout from a XMPP server.')
         self._add_command('msgto', 'Sends a message to a specific contact.')
-        self._add_command('chat', 'Creates a virtual chat room with a specific \
-contact.')
+        self._add_command('clear', 'Clear screen.')
+        self._add_command('help',
+                          'Gets a help description from an internal command or '
+                          'this screen.')
 
-        self._commands = collections.OrderedDict(sorted(self._commands.items()))
-
-
-    def next(self):
-        pass
+        self._add_command('chat',
+                          'Creates a virtual chat room with a specific contact.')
 
 
     def supported_commands(self):
-        return self._commands.items()
+        return self._commands.keys()
 
 
-    def command_info(self, command):
+    def info(self, command):
         return self._commands.get(command, None)
 
 
@@ -99,73 +102,39 @@ class Input(object):
     """
     def __init__(self):
         self._prompt = '$> '
-        self._options = {
-            'register': {
-                'help': 'Register a XMPP account.',
-                'description': '',
-                'number_of_arguments': ''
-            },
-            'login': {
-                'help': 'Makes a login into a XMPP server.',
-                'description': ''
-            },
-            'logout': {
-                'help': 'Makes the logout from a XMPP account.',
-                'description': ''
-            },
-            'quit': {
-                'help': 'Quits application.',
-                'description': ''
-            },
-            'list': {
-                'help': 'Lists our roster contacts.',
-                'description': ''
-            },
-            'help': {
-                'help': 'Gets a help description from an internal command.',
-                'description': ''
-            },
-            'msg': {
-                'help': 'Sends a message to the active contact.',
-                'description': ''
-            },
-            'msgto': {
-                'help': 'Sends a message to a specific contact.',
-                'description': ''
-            },
-            'chat': {
-                'help': 'Creates a virtual chat room with a specific contact.',
-                'description': ''
-            }
-        }
+        self._options = _UserCommands()
+        self._msg_ui = ui.MsgOutput()
 
-        self._options = collections.OrderedDict(sorted(self._options.items()))
-        readline.set_completer(_Completer(self._options.keys()).complete)
+        readline.set_completer(
+            _Completer(self._options.supported_commands()).complete)
+
         readline.parse_and_bind('tab: complete')
 
 
     def help(self, cmd):
-        # Did we need to show the main help?
+        # Do we need to show the main help?
         if len(cmd) == 1:
             print "=========================="
             print "Shellber internal commands"
             print "==========================\n"
-            print "%-20s\tDescription" % 'Command'
-            print "-------             \t-----------\n"
+            print "%-15s\tDescription" % 'Command'
+            print "-------        \t-----------\n"
 
-            for command, info in self._options.iteritems():
-                print '%-20s\t%s' % (command, info['help'])
+            for command in self._options:
+                info = self._options.info(command)
+                print self._msg_ui.parse('${cmd}%-15s${ccmd}\t%s' % \
+                        (command, info['help']))
 
             print ''
         else:
             # Or a specific command?
             cmd_to_show = cmd.get('arguments')
-            cmd_info = self._options.get(cmd_to_show.split(' ')[0])
+            info = self._options.info(cmd_to_show)
 
-            if cmd_info is None:
+            if info is None:
                 print 'Unknown command.'
             else:
-                print '%s - %s' % (cmd_to_show, cmd_info.get('help'))
+                print '%s - %s' % (cmd_to_show, info.get('help'))
 
         return True
 
@@ -186,7 +155,7 @@ class Input(object):
 
         # We always have a command beggining the line. At least that's
         # the expected.
-        data = line.split(' ', 1)
+        data = line.strip().split(' ', 1)
 
         command = dict()
         command['command'] = data[0]
@@ -203,8 +172,7 @@ class Input(object):
 
         :param message: The message to be show.
         """
-        # TODO: change the message, putting some colors into the keywords
-        print '%s%s' % (self._prompt, message)
+        print '%s%s' % (self._prompt, self._msg_ui.parse(message))
 
 
 

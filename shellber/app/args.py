@@ -23,6 +23,8 @@ Functions do handle command line arguments.
 
 import argparse
 
+DEFAULT_CONFIG_FILE = 'shellber.yml'
+
 def parse_command_line_arguments(progname, progversion, description):
     """
     Parse arguments from the command line.
@@ -43,7 +45,7 @@ def parse_command_line_arguments(progname, progversion, description):
 
     parser.add_argument('-C', '--config',
                         help='Reads some configurations from a file.',
-                        dest='config')
+                        dest='config', default=DEFAULT_CONFIG_FILE)
 
     args = parser.parse_args()
 
