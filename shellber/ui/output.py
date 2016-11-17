@@ -18,7 +18,7 @@
 #
 
 """
-Functions do handle user interface.
+Functions do handle user interface output.
 """
 
 import os
@@ -34,14 +34,12 @@ def clear(*unused):
 
 
 
-class MsgOutput(object):
+class Output(object):
     """
     A class to handle a little internal template language to make messages
     more user friendly.
     """
     def __init__(self):
-        colorama.init(autoreset=True)
-
         # Tokens to translate
         self._tokens = {
             'cmd': '${FG_GREEN}',
@@ -85,6 +83,16 @@ class MsgOutput(object):
         :return Returns a new message.
         """
         return Template(self._preprocess(message)).safe_substitute(self._colors)
+
+
+    def message(self, message):
+        """
+        THE function to print messages to the application output.
+
+        :param message: The message which will be printed into the standard
+                        output.
+        """
+        print self.parse(message)
 
 
 

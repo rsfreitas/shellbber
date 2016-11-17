@@ -19,6 +19,6 @@
 
 __all__ = [
     'input',
-    'ui'
+    'output'
 ]
 

@@ -6,6 +6,5 @@ A XMPP command line client.
 
 * colorama
 * SleekXMPP
-* commentjson
 * yaml
 

@@ -55,6 +55,9 @@ def load(filename):
     except yaml.YAMLError:
         return None
 
+    cfg_options.log_filename = cfg.get('log_filename')
+    cfg_options.log_level = cfg.get('log_level')
+
     return cfg_options
 
 

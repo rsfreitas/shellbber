@@ -26,6 +26,14 @@ class Chat(object):
         pass
 
 
+    def register(self):
+        pass
+
+
+    def unregister(self):
+        pass
+
+
     def login(self):
         pass
 
