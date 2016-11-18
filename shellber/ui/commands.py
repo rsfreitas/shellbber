@@ -107,11 +107,11 @@ class UserCommands(object):
 
 
     def _full_help(self):
-        cmd_help = "==========================\n"
-        cmd_help += "Shellber internal commands\n"
-        cmd_help += "==========================\n\n"
+        cmd_help = "${FG_YELLOW}==============================\n"
+        cmd_help += "= Shellber internal commands =\n"
+        cmd_help += "==============================\n\n"
         cmd_help += "%-15s\tDescription\n" % 'Command'
-        cmd_help += "-------        \t-----------\n"
+        cmd_help += "-------        \t-----------${FG_RESET}\n"
 
         for command in self.supported_commands():
             info = self.info(command)
@@ -120,10 +120,32 @@ class UserCommands(object):
         return cmd_help
 
 
+    def _cmd_help(self, arguments):
+        # Arguments from a command usually will be separated by a space. So,
+        # we get the first one to known which command will have its usage
+        # returned.
+        cmd_to_show = arguments.split(' ')[0]
+        info = self.info(cmd_to_show)
+        cmd_help = ''
+
+        if info is None:
+            cmd_help += '${FG_RED}Unknown command.${FG_RESET}\n'
+        else:
+            cmd_help += '${cmd}%s${ccmd} - %s\n' % \
+                    (cmd_to_show, info.get('help'))
+
+            cmd_help += '\nSupported arguments:\n\n'
+
+            for sub_cmd in info['arguments']:
+                cmd_help += '${cmd}%s${ccmd}\n' % sub_cmd
+
+        return cmd_help
+
+
     def help(self, cmd):
         """
         Creates a text containing some help either from all the supported
-        commands or a specific command.
+        commands or a specific one.
 
         :param cmd: The command to known its description.
         """
@@ -134,19 +156,7 @@ class UserCommands(object):
         if cmd_args is None:
             cmd_help += self._full_help()
         else:
-            # Arguments from a command usually will be separated by a space. So,
-            # we get the first one.
-            cmd_to_show = cmd_args.split(' ')[0]
-            info = self.info(cmd_to_show)
-
-            if info is None:
-                cmd_help += '${FG_RED}Unknown command.${FG_RESET}\n'
-            else:
-                cmd_help += '${cmd}%s${ccmd} - %s\n' % \
-                        (cmd_to_show, info.get('help'))
-
-                for sub_cmd in info['arguments']:
-                    cmd_help += '${cmd}%s${ccmd}\n' % sub_cmd
+            cmd_help += self._cmd_help(cmd_args)
 
         return cmd_help
 
