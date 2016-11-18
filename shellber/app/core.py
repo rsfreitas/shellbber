@@ -30,6 +30,8 @@ from shellber.ui import input
 from shellber.ui import output
 from shellber.ui import commands
 
+from shellber.xmpp import chat
+
 class Application(object):
     """
     A class to hold all important informations from the application. Its
@@ -61,9 +63,13 @@ class Application(object):
         self._input = input.Input(self._output)
         self._present_credentials()
 
+        # Start XMPP handling
+        self._chat = chat.Chat()
+
         # Puts the application into the running mode ;-)
         self._args = args
         self._run = True
+        self._ID = ''
 
 
     def _present_credentials(self):
@@ -75,11 +81,81 @@ class Application(object):
 
 
     def _unsupported_command(self, *unused):
-        self._output.message("${FG_RED}Unsupported command${FG_RESET}")
+        self._output.error("Unsupported command")
 
 
     def _help(self, cmd):
         self._output.message(self._input.commands.help(cmd))
+
+
+    def _login(self, cmd):
+        if self._input.commands.validate(cmd) is False:
+            self._output.message("${FG_RED}Invalid command.${FG_RESET} "
+                                 "See ${cmd}help${ccmd} for details.")
+
+            return
+
+        args = cmd.get(input.ARGUMENTS).split(' ')
+
+        if self._chat.login(args) is False:
+            self._output.error("Error while login into the XMPP server.")
+        else:
+            self._ID = '[${FG_CYAN}%s@%s${FG_RESET}]' % \
+                    (self._chat.username, self._chat.server)
+
+            self._input.change_prompt(self._output.parse('%s ' % self._ID))
+
+
+    def _logout(self, cmd):
+        self._chat.logout()
+        self._ID = ''
+        self._input.change_prompt('')
+
+
+    def _start_chat(self, cmd):
+        if self._input.commands.validate(cmd) is False:
+            self._output.message("${FG_RED}Invalid command.${FG_RESET} "
+                                 "See ${cmd}help${ccmd} for details.")
+
+            return
+
+        args = cmd.get(input.ARGUMENTS).split(' ')
+        contact = args[0]
+        self._chat.start_chat(contact)
+        self._input.change_prompt(self._output.parse(
+                                  '%s <--> [${FG_MAGENTA}%s${FG_RESET}] ' % \
+                                    (self._ID, contact)))
+
+
+    def _register(self, cmd):
+        self._chat.register()
+
+
+    def _unregister(self, cmd):
+        self._chat.unregister()
+
+
+    def _message(self, cmd):
+        self._chat.message()
+
+
+    def _group(self, cmd):
+        if self._input.commands.validate(cmd) is False:
+            self._output.message("${FG_RED}Invalid command.${FG_RESET} "
+                                 "See ${cmd}help${ccmd} for details.")
+
+            return
+
+        # Are we calling which 'group' sub-command?
+        args = cmd.get(input.ARGUMENTS).split(' ')
+
+        foo = {
+            commands.CMD_GROUP_CREATE: self._chat.group_create,
+            commands.CMD_GROUP_INVITE: self._chat.group_invite,
+            commands.CMD_GROUP_JOIN: self._chat.group_join
+        }.get(args[0], self._unsupported_command)
+
+        foo(args)
 
 
     def run(self):
@@ -112,8 +188,15 @@ class Application(object):
         # A list of actions to take on every supported command
         action = {
             commands.CMD_HELP: self._help,
+            commands.CMD_LOGIN: self._login,
+            commands.CMD_LOGOUT: self._logout,
+            commands.CMD_REGISTER: self._register,
+            commands.CMD_UNREGISTER: self._unregister,
+            commands.CMD_GROUP: self._group,
+            commands.CMD_CHAT: self._start_chat,
             commands.CMD_CLEAR: output.clear,
-            commands.CMD_QUIT: False
+            commands.CMD_QUIT: False,
+            '': True
         }.get(cmd[input.COMMAND], self._unsupported_command)
 
         if callable(action):

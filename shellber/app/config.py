@@ -44,8 +44,11 @@ def load(filename):
     :return On success returns a ConfigParameter class with all loaded info or
             None otherwise.
     """
-    with open(filename) as fd:
-        data = fd.read()
+    try:
+        with open(filename) as fd:
+            data = fd.read()
+    except:
+        return None
 
     cfg_options = ConfigParameters()
     cfg_options.filename = filename

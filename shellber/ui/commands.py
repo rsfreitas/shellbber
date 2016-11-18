@@ -29,7 +29,7 @@ import shellber.ui.input
 CMD_CHAT = 'chat'
 CMD_CLEAR = 'clear'
 CMD_HELP = 'help'
-CMD_LIST = 'list'
+CMD_CONTACTS = 'contacts'
 CMD_LOGIN = 'login'
 CMD_LOGOUT = 'logout'
 CMD_MSG = 'msg'
@@ -42,6 +42,8 @@ CMD_GROUP = 'group'
 CMD_GROUP_CREATE = 'create'
 CMD_GROUP_INVITE = 'invite'
 CMD_GROUP_JOIN = 'join'
+CMD_FILE = 'file'
+CMD_FILETO = 'fileto'
 
 class UserCommands(object):
     def __init__(self):
@@ -49,29 +51,52 @@ class UserCommands(object):
         self._populate_commands()
         self._commands = collections.OrderedDict(sorted(self._commands.items()))
 
-
     def __iter__(self):
         return iter(self._commands)
 
 
-    def _add_command(self, command, help_, description='', arguments='',
-                     required_arguments=0, optional_arguments=0):
-        self._commands[command] = {
+    def _pack_command(self, command, help_, required=0, optional=0):
+        cmd = dict()
+
+        cmd[command] = {
             'help': help_,
-            'description': description,
-            'required_arguments': required_arguments,
-            'optional_arguments': optional_arguments,
-            'arguments': arguments
+            'required_arguments': required,
+            'optional_arguments': optional,
         }
+
+        return cmd
+
+
+    def _add_command(self, command, help_, sub_commands='', description='',
+                     required_arguments=0, optional_arguments=0):
+        cmd = self._pack_command(command, help_, required=required_arguments,
+                                 optional=optional_arguments)
+
+        if sub_commands:
+            cmd[command]['sub_commands'] = sub_commands
+
+        if description:
+            cmd[command]['description'] = description
+
+        self._commands.update(cmd)
 
 
     def _populate_commands(self):
-        self._add_command(CMD_REGISTER, 'Register a XMPP account.')
-        self._add_command(CMD_LOGIN, 'Makes a login into a XMPP server.')
+        self._add_command(CMD_REGISTER, 'Register an account.')
+        self._add_command(CMD_LOGIN, 'Makes a login into a server.',
+                          required_arguments=3,
+                          description='This command requires at least 3 '
+                                      'arguments: username, password and '
+                                      'server.\nIt also accepts a 4th '
+                                      'where we pass the hostname of the '
+                                      'service into the server.\n\nExample:\n\n'
+                                      '\t${cmd}login${ccmd} user password '
+                                      'jabber.com\n')
+
         self._add_command(CMD_MSG, 'Sends a message to the active contact.')
-        self._add_command(CMD_LIST, 'Show all contacts from the user roster.')
+        self._add_command(CMD_CONTACTS, 'Show all contacts from the user roster.')
         self._add_command(CMD_QUIT, 'Quits application.')
-        self._add_command(CMD_LOGOUT, 'Makes the logout from a XMPP server.')
+        self._add_command(CMD_LOGOUT, 'Makes the logout from a server.')
         self._add_command(CMD_MSGTO, 'Sends a message to a specific contact.')
         self._add_command(CMD_CLEAR, 'Clear screen.')
         self._add_command(CMD_MSGGR, 'Sends a message to a group.')
@@ -80,15 +105,25 @@ class UserCommands(object):
                           'this screen.', optional_arguments=1)
 
         self._add_command(CMD_CHAT,
-                          'Creates a virtual chat room with a specific contact.')
+                          'Creates a virtual chat room with a specific contact.',
+                          required_arguments=1)
 
         self._add_command(CMD_UNREGISTER,
-                          'Unregister an account from a XMPP server.')
+                          'Unregister an account, or try to, from a server.')
 
         self._add_command(CMD_GROUP, 'Manipulates chat groups.',
-                          required_arguments=1,
-                          arguments=[CMD_GROUP_CREATE, CMD_GROUP_INVITE,
-                                     CMD_GROUP_JOIN])
+                          required_arguments=2,
+                          sub_commands=[
+                              self._pack_command(CMD_GROUP_CREATE,
+                                                 "Create groups"),
+                              self._pack_command(CMD_GROUP_INVITE,
+                                                 "Invite users to group chat"),
+                              self._pack_command(CMD_GROUP_JOIN,
+                                                 "Join a group chat")],
+                          description='Only a brief description')
+
+        self._add_command(CMD_FILE, 'Sends a file to the active contact.')
+        self._add_command(CMD_FILETO, 'Sends a file to a specific contact.')
 
 
     def known_command(self, command):
@@ -134,10 +169,17 @@ class UserCommands(object):
             cmd_help += '${cmd}%s${ccmd} - %s\n' % \
                     (cmd_to_show, info.get('help'))
 
-            cmd_help += '\nSupported arguments:\n\n'
+            if info.has_key('sub_commands'):
+                cmd_help += '\nSupported sub-commands:\n\n'
 
-            for sub_cmd in info['arguments']:
-                cmd_help += '${cmd}%s${ccmd}\n' % sub_cmd
+                for sub_cmd in info['sub_commands']:
+                    sub_info= sub_cmd.get(sub_cmd.keys()[0])
+                    cmd_help += '  ${cmd}%-10s${ccmd}\t%s\n' % \
+                            (sub_cmd.keys()[0], sub_info['help'])
+
+            if info.has_key('description'):
+                cmd_help += '\nDescription:\n\n'
+                cmd_help += info['description']
 
         return cmd_help
 
@@ -159,6 +201,23 @@ class UserCommands(object):
             cmd_help += self._cmd_help(cmd_args)
 
         return cmd_help
+
+
+    def validate(self, cmd):
+        args = cmd.get(shellber.ui.input.ARGUMENTS, 'empty').split(' ')
+        info = cmd.get(shellber.ui.input.INFO)
+
+        tests = [
+            info['required_arguments'],
+            len(args) >= info['required_arguments'],
+            args[0] != 'empty'
+        ]
+
+        # We also need to validate the sub-command, if the command support one
+        if info.has_key('sub_commands'):
+            tests.append(args[0] in [s.keys()[0] for s in info['sub_commands']])
+
+        return all(tests)
 
 
 

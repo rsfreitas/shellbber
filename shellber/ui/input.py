@@ -25,6 +25,8 @@ import readline
 
 import shellber.ui.commands as commands
 
+PROMPT = '$> '
+
 # User command
 COMMAND = 'command'
 ARGUMENTS = 'arguments'
@@ -60,7 +62,7 @@ class Input(object):
     A class to handle the input from the user.
     """
     def __init__(self, output_):
-        self._prompt = '$> '
+        self._prompt = PROMPT
         self.commands = commands.UserCommands()
 
         readline.set_completer(
@@ -69,8 +71,8 @@ class Input(object):
         readline.parse_and_bind('tab: complete')
 
 
-    def change_prompt(self):
-        pass
+    def change_prompt(self, prefix):
+        self._prompt = prefix + PROMPT
 
 
     def readline(self):

@@ -18,12 +18,17 @@
 #
 
 """
-A module to handle XMPP protocol.
+A module to handle application chat between users.
 """
 
 class Chat(object):
     def __init__(self):
-        pass
+        self._active_contat = None
+        self._connected = False
+        self.username = ''
+        self.server = ''
+        self.host = ''
+        self._password = ''
 
 
     def register(self):
@@ -34,15 +39,47 @@ class Chat(object):
         pass
 
 
-    def login(self):
-        pass
+    def login(self, args):
+        if len(args) < 3:
+            return False
+
+        self.username = args[0]
+        self._password = args[1]
+        self.server = args[2]
+
+        if len(args) > 3:
+            self.host = args[3]
+
+        self._connected = True
+
+        return True
 
 
     def logout(self):
-        pass
+        if self._connected is False:
+            return
+
+        self._connected = False
+        self._active_contact = None
 
 
     def message(self):
+        pass
+
+
+    def start_chat(self, contact):
+        self._active_contact = contact
+
+
+    def group_create(self, cmd):
+        pass
+
+
+    def group_invite(self, cmd):
+        pass
+
+
+    def group_join(self, cmd):
         pass
 
 

@@ -87,12 +87,23 @@ class Output(object):
 
     def message(self, message):
         """
-        THE function to print messages to the application output.
+        A function to print messages to the application output.
 
         :param message: The message which will be printed into the standard
                         output.
         """
         print self.parse(message)
+
+
+
+    def error(self, message):
+        """
+        A function to print error messages to the application output.
+
+        :param message: The message which will be printed into the standard
+                        output.
+        """
+        print self.parse("${FG_RED}%s${FG_RESET}" % message)
 
 
 
