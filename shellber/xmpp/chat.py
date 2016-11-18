@@ -71,6 +71,10 @@ class Chat(object):
         self._active_contact = contact
 
 
+    def stop_chat(self):
+        self._active_contact = ''
+
+
     def group_create(self, cmd):
         pass
 

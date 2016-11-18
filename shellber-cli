@@ -32,12 +32,14 @@ def main():
     app_args = args.parse_command_line_arguments(__appname__, __version__,
                                                  __desc__)
 
+#    try:
     app = core.Application(app_args)
 
     while app.run():
         cmd = app.wait_for_command()
-        print "DEBUG:",cmd
         app.handle_command(cmd)
+#    except Exception as error:
+#        print error
 
     return 0
 

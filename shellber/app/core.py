@@ -84,6 +84,16 @@ class Application(object):
         self._output.error("Unsupported command")
 
 
+#    def _validate_command(self, cmd):
+#        try:
+#            self._input.commands.validate(cmd)
+#        except Exception as error:
+#            self._output.error(error)
+#            return False
+#
+#        return True
+
+
     def _help(self, cmd):
         self._output.message(self._input.commands.help(cmd))
 
@@ -125,6 +135,11 @@ class Application(object):
         self._input.change_prompt(self._output.parse(
                                   '%s <--> [${FG_MAGENTA}%s${FG_RESET}] ' % \
                                     (self._ID, contact)))
+
+
+    def _stop_chat(self, cmd):
+        self._chat.stop_chat()
+        self._input.change_prompt(self._output.parse('%s ' % self._ID))
 
 
     def _register(self, cmd):
@@ -194,6 +209,7 @@ class Application(object):
             commands.CMD_UNREGISTER: self._unregister,
             commands.CMD_GROUP: self._group,
             commands.CMD_CHAT: self._start_chat,
+            commands.CMD_UNCHAT: self._stop_chat,
             commands.CMD_CLEAR: output.clear,
             commands.CMD_QUIT: False,
             '': True

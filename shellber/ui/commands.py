@@ -44,6 +44,7 @@ CMD_GROUP_INVITE = 'invite'
 CMD_GROUP_JOIN = 'join'
 CMD_FILE = 'file'
 CMD_FILETO = 'fileto'
+CMD_UNCHAT = 'unchat'
 
 class UserCommands(object):
     def __init__(self):
@@ -90,7 +91,7 @@ class UserCommands(object):
                                       'server.\nIt also accepts a 4th '
                                       'where we pass the hostname of the '
                                       'service into the server.\n\nExample:\n\n'
-                                      '\t${cmd}login${ccmd} user password '
+                                      '  ${cmd}login${ccmd} user password '
                                       'jabber.com\n')
 
         self._add_command(CMD_MSG, 'Sends a message to the active contact.')
@@ -124,6 +125,7 @@ class UserCommands(object):
 
         self._add_command(CMD_FILE, 'Sends a file to the active contact.')
         self._add_command(CMD_FILETO, 'Sends a file to a specific contact.')
+        self._add_command(CMD_UNCHAT, 'Closes an active chat room.')
 
 
     def known_command(self, command):
