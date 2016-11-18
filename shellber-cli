@@ -1,0 +1,52 @@
+#!/usr/bin/python
+
+#
+# Copyright (C) 2016 Rodrigo Freitas
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+
+import sys
+
+from shellber.app import args
+from shellber.app import core
+
+__appname__ = 'shellber'
+__version__ = '0.1'
+__desc__ = 'A command line XMPP client.'
+
+def main():
+    # Read command line arguments
+    app_args = args.parse_command_line_arguments(__appname__, __version__,
+                                                 __desc__)
+
+#    try:
+    app = core.Application(app_args)
+
+    while app.run():
+        cmd = app.wait_for_command()
+        app.handle_command(cmd)
+#    except Exception as error:
+#        print error
+
+    return 0
+
+
+
+if __name__ == '__main__':
+    sys.exit(main())
+
+
+
