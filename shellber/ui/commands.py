@@ -206,20 +206,32 @@ class UserCommands(object):
 
 
     def validate(self, cmd):
+        """
+        Function to validate if @cmd is known and, if supports, has its
+        arguments correct.
+
+        :param cmd: The command to validate.
+
+        :return Raises an exception if the command is invalid.
+        """
         args = cmd.get(shellber.ui.input.ARGUMENTS, 'empty').split(' ')
         info = cmd.get(shellber.ui.input.INFO)
 
-        tests = [
-            info['required_arguments'],
-            len(args) >= info['required_arguments'],
-            args[0] != 'empty'
-        ]
+        if cmd.get(shellber.ui.input.COMMAND) not in self._commands:
+            raise Exception("Unknown command")
 
-        # We also need to validate the sub-command, if the command support one
+        if info['required_arguments'] > 0:
+            tests = [
+                len(args) >= info['required_arguments'],
+                args[0] != 'empty'
+            ]
+
+            if not all(tests):
+                raise Exception("Wrong arguments, see help for details")
+
         if info.has_key('sub_commands'):
-            tests.append(args[0] in [s.keys()[0] for s in info['sub_commands']])
-
-        return all(tests)
+            if args[0] not in [s.keys()[0] for s in info['sub_commands']]:
+                raise Exception("Unknown argument, see help for details")
 
 
 

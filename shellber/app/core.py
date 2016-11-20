@@ -84,27 +84,11 @@ class Application(object):
         self._output.error("Unsupported command")
 
 
-#    def _validate_command(self, cmd):
-#        try:
-#            self._input.commands.validate(cmd)
-#        except Exception as error:
-#            self._output.error(error)
-#            return False
-#
-#        return True
-
-
     def _help(self, cmd):
         self._output.message(self._input.commands.help(cmd))
 
 
     def _login(self, cmd):
-        if self._input.commands.validate(cmd) is False:
-            self._output.message("${FG_RED}Invalid command.${FG_RESET} "
-                                 "See ${cmd}help${ccmd} for details.")
-
-            return
-
         args = cmd.get(input.ARGUMENTS).split(' ')
 
         if self._chat.login(args) is False:
@@ -123,12 +107,6 @@ class Application(object):
 
 
     def _start_chat(self, cmd):
-        if self._input.commands.validate(cmd) is False:
-            self._output.message("${FG_RED}Invalid command.${FG_RESET} "
-                                 "See ${cmd}help${ccmd} for details.")
-
-            return
-
         args = cmd.get(input.ARGUMENTS).split(' ')
         contact = args[0]
         self._chat.start_chat(contact)
@@ -155,12 +133,6 @@ class Application(object):
 
 
     def _group(self, cmd):
-        if self._input.commands.validate(cmd) is False:
-            self._output.message("${FG_RED}Invalid command.${FG_RESET} "
-                                 "See ${cmd}help${ccmd} for details.")
-
-            return
-
         # Are we calling which 'group' sub-command?
         args = cmd.get(input.ARGUMENTS).split(' ')
 
@@ -200,6 +172,12 @@ class Application(object):
 
         :param cmd: The previously entered command.
         """
+        try:
+            self._input.commands.validate(cmd)
+        except Exception as error:
+            self._output.error(error)
+            return
+
         # A list of actions to take on every supported command
         action = {
             commands.CMD_HELP: self._help,
