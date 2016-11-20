@@ -29,6 +29,7 @@ class Chat(object):
         self.server = ''
         self.host = ''
         self._password = ''
+        self.ID = ''
 
 
     def register(self):
@@ -40,50 +41,70 @@ class Chat(object):
 
 
     def login(self, args):
-        if len(args) < 3:
-            return False
+        if self._connected:
+            raise Exception("already connected")
 
         self.username = args[0]
         self._password = args[1]
         self.server = args[2]
 
+        # Build the user ID
+        self.ID = self.username + "@" + self.server
+
         if len(args) > 3:
             self.host = args[3]
+            self.ID += "/" + self.host
 
         self._connected = True
-
-        return True
 
 
     def logout(self):
         if self._connected is False:
-            return
+            raise Exception("not connected")
 
         self._connected = False
         self._active_contact = None
 
 
     def message(self):
+        if self._connected is False:
+            raise Exception("not connected")
+
         pass
 
 
     def start_chat(self, contact):
+        if self._connected is False:
+            raise Exception("not connected")
+
         self._active_contact = contact
 
 
     def stop_chat(self):
+        if self._connected is False:
+            raise Exception("not connected")
+
         self._active_contact = ''
 
 
     def group_create(self, cmd):
+        if self._connected is False:
+            raise Exception("not connected")
+
         pass
 
 
     def group_invite(self, cmd):
+        if self._connected is False:
+            raise Exception("not connected")
+
         pass
 
 
     def group_join(self, cmd):
+        if self._connected is False:
+            raise Exception("not connected")
+
         pass
 
 

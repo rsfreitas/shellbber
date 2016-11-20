@@ -60,7 +60,8 @@ class Application(object):
         self._output = output.Output()
 
         # Start user-input handling
-        self._input = input.Input(self._output)
+        self._env = commands.ENV_MAIN
+        self._input = input.Input(self._output, self._env)
         self._present_credentials()
 
         # Start XMPP handling
@@ -89,15 +90,21 @@ class Application(object):
 
 
     def _login(self, cmd):
-        args = cmd.get(input.ARGUMENTS).split(' ')
+        args = cmd.get(input.ARGUMENTS)
 
-        if self._chat.login(args) is False:
-            self._output.error("Error while login into the XMPP server.")
-        else:
-            self._ID = '[${FG_CYAN}%s@%s${FG_RESET}]' % \
-                    (self._chat.username, self._chat.server)
+        if args is None:
+            # TODO: Check if there is any config to use before
+            args = self._cfg.account['name'] + " " + \
+                self._cfg.account['pass'] + " " + \
+                self._cfg.account['server'] + " " + \
+                self._cfg.account['host']
 
+        try:
+            self._chat.login(args.split())
+            self._ID = '[${FG_CYAN}%s${FG_RESET}]' % self._chat.ID
             self._input.change_prompt(self._output.parse('%s ' % self._ID))
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _logout(self, cmd):
@@ -107,17 +114,24 @@ class Application(object):
 
 
     def _start_chat(self, cmd):
-        args = cmd.get(input.ARGUMENTS).split(' ')
+        args = cmd.get(input.ARGUMENTS).split()
         contact = args[0]
-        self._chat.start_chat(contact)
-        self._input.change_prompt(self._output.parse(
-                                  '%s <--> [${FG_MAGENTA}%s${FG_RESET}] ' % \
-                                    (self._ID, contact)))
+
+        try:
+            self._chat.start_chat(contact)
+            self._input.change_prompt(self._output.parse(
+                                      '%s <--> [${FG_MAGENTA}%s${FG_RESET}] ' % \
+                                        (self._ID, contact)))
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _stop_chat(self, cmd):
-        self._chat.stop_chat()
-        self._input.change_prompt(self._output.parse('%s ' % self._ID))
+        try:
+            self._chat.stop_chat()
+            self._input.change_prompt(self._output.parse('%s ' % self._ID))
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _register(self, cmd):
@@ -134,7 +148,7 @@ class Application(object):
 
     def _group(self, cmd):
         # Are we calling which 'group' sub-command?
-        args = cmd.get(input.ARGUMENTS).split(' ')
+        args = cmd.get(input.ARGUMENTS).split()
 
         foo = {
             commands.CMD_GROUP_CREATE: self._chat.group_create,
@@ -164,6 +178,26 @@ class Application(object):
         return self._input.readline()
 
 
+    def _quit(self, *unused):
+        """
+        Quits an application environment or the application itself.
+        """
+        if self._env == commands.ENV_MAIN:
+            self._run = False
+        elif self._env == commands.ENV_CONFIG:
+            self._env = commands.ENV_MAIN
+            self._input.update_completer(self._env)
+
+
+    def _config(self, cmd):
+        """
+        Enters in the application config environment.
+        """
+        # TODO: Change prompt to show the new environment
+        self._env = commands.ENV_CONFIG
+        self._input.update_completer(self._env)
+
+
     def handle_command(self, cmd):
         """
         A function to handle a previously entered command by the user. If the
@@ -172,6 +206,9 @@ class Application(object):
 
         :param cmd: The previously entered command.
         """
+        if len(cmd.get(input.COMMAND)) < 1:
+            return
+
         try:
             self._input.commands.validate(cmd)
         except Exception as error:
@@ -188,9 +225,9 @@ class Application(object):
             commands.CMD_GROUP: self._group,
             commands.CMD_CHAT: self._start_chat,
             commands.CMD_UNCHAT: self._stop_chat,
+            commands.CMD_CONFIG: self._config,
             commands.CMD_CLEAR: output.clear,
-            commands.CMD_QUIT: False,
-            '': True
+            commands.CMD_QUIT: self._quit,
         }.get(cmd[input.COMMAND], self._unsupported_command)
 
         if callable(action):

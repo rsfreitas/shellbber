@@ -25,16 +25,22 @@ import collections
 
 import shellber.ui.input
 
-# Supported commands
-CMD_CHAT = 'chat'
+# Application command environments
+ENV_MAIN = 1
+ENV_CONFIG = 2
+
+# Common commands
 CMD_CLEAR = 'clear'
 CMD_HELP = 'help'
+CMD_QUIT = 'quit'
+
+# Main commands
+CMD_CHAT = 'chat'
 CMD_CONTACTS = 'contacts'
 CMD_LOGIN = 'login'
 CMD_LOGOUT = 'logout'
 CMD_MSG = 'msg'
 CMD_MSGTO = 'msgto'
-CMD_QUIT = 'quit'
 CMD_REGISTER = 'register'
 CMD_UNREGISTER = 'unregister'
 CMD_MSGGR = 'msggr'
@@ -45,18 +51,33 @@ CMD_GROUP_JOIN = 'join'
 CMD_FILE = 'file'
 CMD_FILETO = 'fileto'
 CMD_UNCHAT = 'unchat'
+CMD_CONFIG = 'config'
 
-class UserCommands(object):
+# Configuration commands
+CMD_CFG_SET = 'set'
+CMD_CFG_QUIT = 'quit'
+CMD_CFG_SET_USERNAME = 'username'
+CMD_CFG_SET_PASSWORD = 'password'
+CMD_CFG_SET_SERVER = 'server'
+CMD_CFG_SET_HOST = 'host'
+
+class Commands(object):
     def __init__(self):
         self._commands = dict()
-        self._populate_commands()
-        self._commands = collections.OrderedDict(sorted(self._commands.items()))
+        self.add_command(CMD_CLEAR, 'Clear screen.')
+        self.add_command(CMD_HELP,
+                         'Gets a help description from an internal command or '
+                         'this screen.', optional_arguments=1)
+
+        self.add_command(CMD_QUIT, 'Quits application or an internal '
+                                   'environment.')
+
 
     def __iter__(self):
         return iter(self._commands)
 
 
-    def _pack_command(self, command, help_, required=0, optional=0):
+    def pack_command(self, command, help_, required=0, optional=0):
         cmd = dict()
 
         cmd[command] = {
@@ -68,10 +89,10 @@ class UserCommands(object):
         return cmd
 
 
-    def _add_command(self, command, help_, sub_commands='', description='',
-                     required_arguments=0, optional_arguments=0):
-        cmd = self._pack_command(command, help_, required=required_arguments,
-                                 optional=optional_arguments)
+    def add_command(self, command, help_, sub_commands='', description='',
+                    required_arguments=0, optional_arguments=0):
+        cmd = self.pack_command(command, help_, required=required_arguments,
+                                optional=optional_arguments)
 
         if sub_commands:
             cmd[command]['sub_commands'] = sub_commands
@@ -82,50 +103,8 @@ class UserCommands(object):
         self._commands.update(cmd)
 
 
-    def _populate_commands(self):
-        self._add_command(CMD_REGISTER, 'Register an account.')
-        self._add_command(CMD_LOGIN, 'Makes a login into a server.',
-                          required_arguments=3,
-                          description='This command requires at least 3 '
-                                      'arguments: username, password and '
-                                      'server.\nIt also accepts a 4th '
-                                      'where we pass the hostname of the '
-                                      'service into the server.\n\nExample:\n\n'
-                                      '  ${cmd}login${ccmd} user password '
-                                      'jabber.com\n')
-
-        self._add_command(CMD_MSG, 'Sends a message to the active contact.')
-        self._add_command(CMD_CONTACTS, 'Show all contacts from the user roster.')
-        self._add_command(CMD_QUIT, 'Quits application.')
-        self._add_command(CMD_LOGOUT, 'Makes the logout from a server.')
-        self._add_command(CMD_MSGTO, 'Sends a message to a specific contact.')
-        self._add_command(CMD_CLEAR, 'Clear screen.')
-        self._add_command(CMD_MSGGR, 'Sends a message to a group.')
-        self._add_command(CMD_HELP,
-                          'Gets a help description from an internal command or '
-                          'this screen.', optional_arguments=1)
-
-        self._add_command(CMD_CHAT,
-                          'Creates a virtual chat room with a specific contact.',
-                          required_arguments=1)
-
-        self._add_command(CMD_UNREGISTER,
-                          'Unregister an account, or try to, from a server.')
-
-        self._add_command(CMD_GROUP, 'Manipulates chat groups.',
-                          required_arguments=2,
-                          sub_commands=[
-                              self._pack_command(CMD_GROUP_CREATE,
-                                                 "Create groups"),
-                              self._pack_command(CMD_GROUP_INVITE,
-                                                 "Invite users to group chat"),
-                              self._pack_command(CMD_GROUP_JOIN,
-                                                 "Join a group chat")],
-                          description='Only a brief description')
-
-        self._add_command(CMD_FILE, 'Sends a file to the active contact.')
-        self._add_command(CMD_FILETO, 'Sends a file to a specific contact.')
-        self._add_command(CMD_UNCHAT, 'Closes an active chat room.')
+    def populate_commands(self):
+        self._commands = collections.OrderedDict(sorted(self._commands.items()))
 
 
     def known_command(self, command):
@@ -144,6 +123,7 @@ class UserCommands(object):
 
 
     def _full_help(self):
+        # TODO: Show actual enviroment
         cmd_help = "${FG_YELLOW}==============================\n"
         cmd_help += "= Shellber internal commands =\n"
         cmd_help += "==============================\n\n"
@@ -232,6 +212,75 @@ class UserCommands(object):
         if info.has_key('sub_commands'):
             if args[0] not in [s.keys()[0] for s in info['sub_commands']]:
                 raise Exception("Unknown argument, see help for details")
+
+
+
+class UserCommands(Commands):
+    def __init__(self):
+        super(UserCommands, self).__init__()
+        self.add_command(CMD_REGISTER, 'Register an account.')
+        self.add_command(CMD_LOGIN, 'Makes a login into a server.',
+                         optional_arguments=4,
+                         description='This command requires at least 3 '
+                                     'arguments: username, password and '
+                                     'server.\nIt also accepts a 4th '
+                                     'where we pass the hostname of the '
+                                     'service into the server.\n\nExample:\n\n'
+                                     '  ${cmd}login${ccmd} user password '
+                                     'jabber.com\n')
+
+        self.add_command(CMD_MSG, 'Sends a message to the active contact.')
+        self.add_command(CMD_CONTACTS, 'Show all contacts from the user roster.')
+        self.add_command(CMD_LOGOUT, 'Makes the logout from a server.')
+        self.add_command(CMD_MSGTO, 'Sends a message to a specific contact.')
+        self.add_command(CMD_MSGGR, 'Sends a message to a group.')
+        self.add_command(CMD_CHAT,
+                         'Creates a virtual chat room with a specific contact.',
+                         required_arguments=1,
+                         description='This command must receive as argument '
+                                     'a contact name to establish a chat with '
+                                     'it.\n')
+
+        self.add_command(CMD_UNREGISTER,
+                         'Unregister an account, or try to, from a server.')
+
+        self.add_command(CMD_GROUP, 'Manipulates chat groups.',
+                         required_arguments=2,
+                         sub_commands=[
+                             self.pack_command(CMD_GROUP_CREATE,
+                                               'Create groups'),
+                             self.pack_command(CMD_GROUP_INVITE,
+                                               'Invite users to group chat'),
+                             self.pack_command(CMD_GROUP_JOIN,
+                                               'Join a group chat')],
+                         description='Only a brief description')
+
+        self.add_command(CMD_FILE, 'Sends a file to the active contact.')
+        self.add_command(CMD_FILETO, 'Sends a file to a specific contact.')
+        self.add_command(CMD_UNCHAT, 'Closes an active chat room.')
+        self.add_command(CMD_CONFIG, 'Enter in config mode.')
+        self.populate_commands()
+
+
+
+class ConfigCommands(Commands):
+    def __init__(self):
+        super(ConfigCommands, self).__init__()
+        self.add_command(CMD_CFG_SET, 'Sets a config value.',
+                         required_arguments=2,
+                         sub_commands=[
+                             self.pack_command(CMD_CFG_SET_USERNAME,
+                                               'Configures the username.'),
+                             self.pack_command(CMD_CFG_SET_PASSWORD,
+                                               'Configures the password.'),
+                             self.pack_command(CMD_CFG_SET_SERVER,
+                                               'Configures the server name.'),
+                             self.pack_command(CMD_CFG_SET_HOST,
+                                               'Configures the server service '
+                                               'host name.'),
+                         ])
+
+        self.populate_commands()
 
 
 

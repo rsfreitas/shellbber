@@ -61,14 +61,23 @@ class Input(object):
     """
     A class to handle the input from the user.
     """
-    def __init__(self, output_):
+    def __init__(self, output_, env):
         self._prompt = PROMPT
-        self.commands = commands.UserCommands()
+        self._main_commands = commands.UserCommands()
+        self._cfg_commands = commands.ConfigCommands()
+
+        self.update_completer(env)
+        readline.parse_and_bind('tab: complete')
+
+
+    def update_completer(self, env):
+        self.commands = {
+            commands.ENV_MAIN: self._main_commands,
+            commands.ENV_CONFIG: self._cfg_commands
+        }.get(env)
 
         readline.set_completer(
             _Completer(self.commands.supported_commands()).complete)
-
-        readline.parse_and_bind('tab: complete')
 
 
     def change_prompt(self, prefix):

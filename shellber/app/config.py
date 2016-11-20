@@ -60,6 +60,7 @@ def load(filename):
 
     cfg_options.log_filename = cfg.get('log_filename')
     cfg_options.log_level = cfg.get('log_level')
+    cfg_options.account = cfg.get('account')
 
     return cfg_options
 
