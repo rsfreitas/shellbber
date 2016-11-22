@@ -33,6 +33,7 @@ ENV_CONFIG = 2
 CMD_CLEAR = 'clear'
 CMD_HELP = 'help'
 CMD_QUIT = 'quit'
+CMD_QUIT_APP = 'app'
 
 # Main commands
 CMD_CHAT = 'chat'
@@ -69,8 +70,13 @@ class Commands(object):
                          'Gets a help description from an internal command or '
                          'this screen.', optional_arguments=1)
 
-        self.add_command(CMD_QUIT, 'Quits application or an internal '
-                                   'environment.')
+        self.add_command(CMD_QUIT,
+                         'Quits application or an internal environment.',
+                         optional_arguments=1,
+                         sub_commands=[
+                            self.pack_command(CMD_QUIT_APP,
+                                              'Quits application directly.')
+                         ])
 
 
     def __iter__(self):
@@ -209,7 +215,7 @@ class Commands(object):
             if not all(tests):
                 raise Exception("Wrong arguments, see help for details")
 
-        if info.has_key('sub_commands'):
+        if info.has_key('sub_commands') and args[0] != 'empty':
             if args[0] not in [s.keys()[0] for s in info['sub_commands']]:
                 raise Exception("Unknown argument, see help for details")
 

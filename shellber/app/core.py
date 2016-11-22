@@ -91,12 +91,20 @@ class Application(object):
     def _login(self, cmd):
         args = cmd.get(input.ARGUMENTS)
 
+        # No arguments, we'll use the configured account
         if args is None:
-            # TODO: Check if there is any config to use before
-            args = self._cfg.account['name'] + " " + \
-                self._cfg.account['pass'] + " " + \
-                self._cfg.account['server'] + " " + \
-                self._cfg.account['host']
+            if self._cfg.account is None:
+                self._output.error("Missing account configuration")
+                return
+            elif all(key in self._cfg.account for key in ('name', 'pass',
+                                                          'server', 'host')):
+                args = self._cfg.account['name'] + " " + \
+                    self._cfg.account['pass'] + " " + \
+                    self._cfg.account['server'] + " " + \
+                    self._cfg.account['host']
+            else:
+                self._output.error("Missing account configuration details")
+                return
 
         try:
             self._chat.login(args.split())
@@ -155,6 +163,37 @@ class Application(object):
         foo(args)
 
 
+    def _quit(self, cmd):
+        """
+        Quits an application environment or the application itself.
+        """
+        args = cmd.get(input.ARGUMENTS, 'empty').split()
+        tests = [
+            self._env == commands.ENV_MAIN,
+            args[0] == commands.CMD_QUIT_APP
+        ]
+
+        if any(tests):
+            self._run = False
+        elif self._env == commands.ENV_CONFIG:
+            self._input.set_prompt(login=self._chat.ID,
+                                   contact=self._chat.contact)
+
+            self._env = commands.ENV_MAIN
+            self._input.update_completer(self._env)
+
+
+    def _config(self, cmd):
+        """
+        Enters in the application config environment.
+        """
+        self._input.set_prompt(login=self._chat.ID, contact=self._chat.contact,
+                               environment='config')
+
+        self._env = commands.ENV_CONFIG
+        self._input.update_completer(self._env)
+
+
     def run(self):
         """
         Checks if the application may still run.
@@ -172,32 +211,6 @@ class Application(object):
         :return Returns the command entered by the user.
         """
         return self._input.readline()
-
-
-    def _quit(self, *unused):
-        """
-        Quits an application environment or the application itself.
-        """
-        if self._env == commands.ENV_MAIN:
-            self._run = False
-        elif self._env == commands.ENV_CONFIG:
-            self._input.set_prompt(login=self._chat.ID,
-                                   contact=self._chat.contact)
-
-            self._env = commands.ENV_MAIN
-            self._input.update_completer(self._env)
-
-
-    def _config(self, cmd):
-        """
-        Enters in the application config environment.
-        """
-        # TODO: Change prompt to show the new environment
-        self._input.set_prompt(login=self._chat.ID, contact=self._chat.contact,
-                               environment='config')
-
-        self._env = commands.ENV_CONFIG
-        self._input.update_completer(self._env)
 
 
     def handle_command(self, cmd):
