@@ -18,18 +18,18 @@
 #
 
 """
-A module to handle application chat between users.
+A module to handle chat between users.
 """
 
 class Chat(object):
     def __init__(self):
-        self._active_contat = None
         self._connected = False
+        self._password = ''
         self.username = ''
         self.server = ''
         self.host = ''
-        self._password = ''
         self.ID = ''
+        self.contact = ''
 
 
     def register(self):
@@ -63,7 +63,8 @@ class Chat(object):
             raise Exception("not connected")
 
         self._connected = False
-        self._active_contact = None
+        self.contact = ''
+        self.ID = ''
 
 
     def message(self):
@@ -77,14 +78,14 @@ class Chat(object):
         if self._connected is False:
             raise Exception("not connected")
 
-        self._active_contact = contact
+        self.contact = contact
 
 
     def stop_chat(self):
         if self._connected is False:
             raise Exception("not connected")
 
-        self._active_contact = ''
+        self.contact = ''
 
 
     def group_create(self, cmd):

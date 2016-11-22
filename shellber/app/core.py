@@ -70,7 +70,6 @@ class Application(object):
         # Puts the application into the running mode ;-)
         self._args = args
         self._run = True
-        self._ID = ''
 
 
     def _present_credentials(self):
@@ -101,16 +100,14 @@ class Application(object):
 
         try:
             self._chat.login(args.split())
-            self._ID = '[${FG_CYAN}%s${FG_RESET}]' % self._chat.ID
-            self._input.change_prompt(self._output.parse('%s ' % self._ID))
+            self._input.set_prompt(login=self._chat.ID)
         except Exception as error:
             self._output.error("Error: " + str(error))
 
 
     def _logout(self, cmd):
         self._chat.logout()
-        self._ID = ''
-        self._input.change_prompt('')
+        self._input.set_prompt()
 
 
     def _start_chat(self, cmd):
@@ -119,9 +116,8 @@ class Application(object):
 
         try:
             self._chat.start_chat(contact)
-            self._input.change_prompt(self._output.parse(
-                                      '%s <--> [${FG_MAGENTA}%s${FG_RESET}] ' % \
-                                        (self._ID, contact)))
+            self._input.set_prompt(login=self._chat.ID,
+                                   contact=self._chat.contact)
         except Exception as error:
             self._output.error("Error: " + str(error))
 
@@ -129,7 +125,7 @@ class Application(object):
     def _stop_chat(self, cmd):
         try:
             self._chat.stop_chat()
-            self._input.change_prompt(self._output.parse('%s ' % self._ID))
+            self._input.set_prompt(login=self._chat.ID)
         except Exception as error:
             self._output.error("Error: " + str(error))
 
@@ -185,6 +181,9 @@ class Application(object):
         if self._env == commands.ENV_MAIN:
             self._run = False
         elif self._env == commands.ENV_CONFIG:
+            self._input.set_prompt(login=self._chat.ID,
+                                   contact=self._chat.contact)
+
             self._env = commands.ENV_MAIN
             self._input.update_completer(self._env)
 
@@ -194,6 +193,9 @@ class Application(object):
         Enters in the application config environment.
         """
         # TODO: Change prompt to show the new environment
+        self._input.set_prompt(login=self._chat.ID, contact=self._chat.contact,
+                               environment='config')
+
         self._env = commands.ENV_CONFIG
         self._input.update_completer(self._env)
 
