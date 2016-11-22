@@ -109,4 +109,16 @@ class Chat(object):
         pass
 
 
+    def contact_add(self, cmd):
+        pass
+
+
+    def contact_del(self, cmd):
+        pass
+
+
+    def contact_list(self, cmd):
+        pass
+
+
 

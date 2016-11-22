@@ -30,7 +30,7 @@ from shellber.ui import input
 from shellber.ui import output
 from shellber.ui import commands
 
-from shellber.xmpp import chat
+from shellber.chat import chat
 
 class Application(object):
     """
@@ -114,8 +114,11 @@ class Application(object):
 
 
     def _logout(self, cmd):
-        self._chat.logout()
-        self._input.set_prompt()
+        try:
+            self._chat.logout()
+            self._input.set_prompt()
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _start_chat(self, cmd):
@@ -147,7 +150,12 @@ class Application(object):
 
 
     def _message(self, cmd):
-        self._chat.message()
+        args = cmd.get(input.ARGUMENTS)
+
+        try:
+            self._chat.message()
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _group(self, cmd):
@@ -192,6 +200,34 @@ class Application(object):
 
         self._env = commands.ENV_CONFIG
         self._input.update_completer(self._env)
+
+
+    def _contacts(self, cmd):
+        args = cmd.get(input.ARGUMENTS).split()
+
+        foo = {
+            commands.CMD_CONTACT_ADD: self._chat.contact_add,
+            commands.CMD_CONTACT_DEL: self._chat.contact_del,
+            commands.CMD_CONTACT_LIST: self._chat.contact_list
+        }.get(args[0], self._unsupported_command)
+
+        foo(args)
+
+
+    def _file(self, cmd):
+        pass
+
+
+    def _fileto(self, cmd):
+        pass
+
+
+    def _msggr(self, cmd):
+        pass
+
+
+    def _msgto(self, cmd):
+        pass
 
 
     def run(self):
@@ -241,6 +277,12 @@ class Application(object):
             commands.CMD_CHAT: self._start_chat,
             commands.CMD_UNCHAT: self._stop_chat,
             commands.CMD_CONFIG: self._config,
+            commands.CMD_CONTACT: self._contacts,
+            commands.CMD_FILE: self._file,
+            commands.CMD_FILETO: self._fileto,
+            commands.CMD_MSG: self._message,
+            commands.CMD_MSGGR: self._msggr,
+            commands.CMD_MSGTO: self._msgto,
             commands.CMD_CLEAR: output.clear,
             commands.CMD_QUIT: self._quit,
         }.get(cmd[input.COMMAND], self._unsupported_command)

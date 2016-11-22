@@ -37,7 +37,10 @@ CMD_QUIT_APP = 'app'
 
 # Main commands
 CMD_CHAT = 'chat'
-CMD_CONTACTS = 'contacts'
+CMD_CONTACT = 'contact'
+CMD_CONTACT_ADD = 'add'
+CMD_CONTACT_DEL = 'del'
+CMD_CONTACT_LIST = 'list'
 CMD_LOGIN = 'login'
 CMD_LOGOUT = 'logout'
 CMD_MSG = 'msg'
@@ -224,7 +227,6 @@ class Commands(object):
 class UserCommands(Commands):
     def __init__(self):
         super(UserCommands, self).__init__()
-        self.add_command(CMD_REGISTER, 'Register an account.')
         self.add_command(CMD_LOGIN, 'Makes a login into a server.',
                          optional_arguments=4,
                          description='This command requires at least 3 '
@@ -233,13 +235,17 @@ class UserCommands(Commands):
                                      'where we pass the hostname of the '
                                      'service into the server.\n\nExample:\n\n'
                                      '  ${cmd}login${ccmd} user password '
-                                     'jabber.com\n')
+                                     'jabber.com [service]\n')
 
-        self.add_command(CMD_MSG, 'Sends a message to the active contact.')
-        self.add_command(CMD_CONTACTS, 'Show all contacts from the user roster.')
-        self.add_command(CMD_LOGOUT, 'Makes the logout from a server.')
-        self.add_command(CMD_MSGTO, 'Sends a message to a specific contact.')
-        self.add_command(CMD_MSGGR, 'Sends a message to a group.')
+        self.add_command(CMD_MSG, 'Sends a message to the active contact.',
+                         required_arguments=1)
+
+        self.add_command(CMD_MSGTO, 'Sends a message to a specific contact.',
+                         required_arguments=2)
+
+        self.add_command(CMD_MSGGR, 'Sends a message to a group.',
+                         required_arguments=2)
+
         self.add_command(CMD_CHAT,
                          'Creates a virtual chat room with a specific contact.',
                          required_arguments=1,
@@ -261,8 +267,24 @@ class UserCommands(Commands):
                                                'Join a group chat')],
                          description='Only a brief description')
 
+        self.add_command(CMD_CONTACT, 'Manipulates the user contacts.',
+                         required_arguments=1,
+                         sub_commands=[
+                             self.pack_command(CMD_CONTACT_ADD,
+                                               'Adds a contact into the user '
+                                               'list.'),
+                             self.pack_command(CMD_CONTACT_DEL,
+                                               'Deletes a contact from the '
+                                               'user list.'),
+                             self.pack_command(CMD_CONTACT_LIST,
+                                               'List all contacts from the '
+                                               'user list.')
+                         ])
+
         self.add_command(CMD_FILE, 'Sends a file to the active contact.')
         self.add_command(CMD_FILETO, 'Sends a file to a specific contact.')
+        self.add_command(CMD_REGISTER, 'Register an account.')
+        self.add_command(CMD_LOGOUT, 'Makes the logout from a server.')
         self.add_command(CMD_UNCHAT, 'Closes an active chat room.')
         self.add_command(CMD_CONFIG, 'Enter in config mode.')
         self.populate_commands()
