@@ -149,31 +149,28 @@ class Application(object):
         self._chat.unregister()
 
 
-    def _message(self, cmd):
-        args = cmd.get(input.ARGUMENTS)
-
-        try:
-            self._chat.message()
-        except Exception as error:
-            self._output.error("Error: " + str(error))
-
-
     def _group(self, cmd):
         # Are we calling which 'group' sub-command?
         args = cmd.get(input.ARGUMENTS).split()
 
-        foo = {
-            commands.CMD_GROUP_CREATE: self._chat.group_create,
-            commands.CMD_GROUP_INVITE: self._chat.group_invite,
-            commands.CMD_GROUP_JOIN: self._chat.group_join
-        }.get(args[0], self._unsupported_command)
-
-        foo(args)
+        try:
+            if args[0] == commands.CMD_GROUP_CREATE:
+                self._chat.group_create(args[1])
+            elif args[0] == commands.CMD_GROUP_INVITE:
+                self._chat.group_invite(args[1:])
+            elif args[0] == commands.GROUP_JOIN:
+                self._chat.group_join(args[1])
+            else:
+                self._unsupported_command(args)
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _quit(self, cmd):
         """
         Quits an application environment or the application itself.
+
+        :param cmd: The command entered by the user.
         """
         args = cmd.get(input.ARGUMENTS, 'empty').split()
         tests = [
@@ -194,6 +191,8 @@ class Application(object):
     def _config(self, cmd):
         """
         Enters in the application config environment.
+
+        :param cmd: The command entered by the user.
         """
         self._input.set_prompt(login=self._chat.ID, contact=self._chat.contact,
                                environment='config')
@@ -205,29 +204,65 @@ class Application(object):
     def _contacts(self, cmd):
         args = cmd.get(input.ARGUMENTS).split()
 
-        foo = {
-            commands.CMD_CONTACT_ADD: self._chat.contact_add,
-            commands.CMD_CONTACT_DEL: self._chat.contact_del,
-            commands.CMD_CONTACT_LIST: self._chat.contact_list
-        }.get(args[0], self._unsupported_command)
-
-        foo(args)
+        try:
+            if args[0] == commands.CMD_CONTACT_ADD:
+                self._chat.contact_add(args[1])
+            elif args[0] == commands.CMD_CONTACT_DEL:
+                self._chat.contact_del(args[1])
+            elif args[0] == commands.CMD_CONTACT_LIST:
+                self._chat.contact_list()
+            else:
+                self._unsupported_command(args)
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _file(self, cmd):
+        """
+        Sends a file to the active contact in the chat.
+
+        :param cmd: The command entered by the user.
+        """
         pass
 
 
     def _fileto(self, cmd):
+        """
+        Sends a file directly to a specific user or a group. We must receive the
+        first part of the command argument as the user/group name.
+
+        :param cmd: The command entered by the user.
+        """
         pass
 
 
-    def _msggr(self, cmd):
-        pass
+    def _message(self, cmd):
+        """
+        Sends a message to the active contact in the chat.
+
+        :param cmd: The command entered by the user.
+        """
+        args = cmd.get(input.ARGUMENTS)
+
+        try:
+            self._chat.message(args)
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _msgto(self, cmd):
-        pass
+        """
+        Sends a message directly to a specific user or a group. Here we must
+        receive the first part of the command argument as the user/group name.
+
+        :param cmd: The command entered by the user.
+        """
+        args = cmd.get(input.ARGUMENTS).split(' ', 1)
+
+        try:
+            self._chat.message(args[1], destination=args[0])
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def run(self):
@@ -263,7 +298,7 @@ class Application(object):
         try:
             self._input.commands.validate(cmd)
         except Exception as error:
-            self._output.error(error)
+            self._output.error(str(error))
             return
 
         # A list of actions to take on every supported command
@@ -281,7 +316,7 @@ class Application(object):
             commands.CMD_FILE: self._file,
             commands.CMD_FILETO: self._fileto,
             commands.CMD_MSG: self._message,
-            commands.CMD_MSGGR: self._msggr,
+            commands.CMD_MSGGR: self._msgto,
             commands.CMD_MSGTO: self._msgto,
             commands.CMD_CLEAR: output.clear,
             commands.CMD_QUIT: self._quit,

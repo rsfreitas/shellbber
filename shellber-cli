@@ -37,7 +37,9 @@ def main():
 
     while app.run():
         cmd = app.wait_for_command()
-        app.handle_command(cmd)
+
+        if cmd is not None:
+            app.handle_command(cmd)
 #    except Exception as error:
 #        print error
 

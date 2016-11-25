@@ -21,6 +21,8 @@
 A module to handle chat between users.
 """
 
+import logging
+
 class Chat(object):
     def __init__(self):
         self._connected = False
@@ -67,7 +69,7 @@ class Chat(object):
         self.ID = ''
 
 
-    def message(self):
+    def message(self, message, destination=''):
         if self._connected is False:
             raise Exception("not connected")
 
@@ -88,36 +90,36 @@ class Chat(object):
         self.contact = ''
 
 
-    def group_create(self, cmd):
+    def group_create(self, group_name):
         if self._connected is False:
             raise Exception("not connected")
 
         pass
 
 
-    def group_invite(self, cmd):
+    def group_invite(self, users):
         if self._connected is False:
             raise Exception("not connected")
 
         pass
 
 
-    def group_join(self, cmd):
+    def group_join(self, group_name):
         if self._connected is False:
             raise Exception("not connected")
 
         pass
 
 
-    def contact_add(self, cmd):
+    def contact_add(self, name):
         pass
 
 
-    def contact_del(self, cmd):
+    def contact_del(self, name):
         pass
 
 
-    def contact_list(self, cmd):
+    def contact_list(self):
         pass
 
 

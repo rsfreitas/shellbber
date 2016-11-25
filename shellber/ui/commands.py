@@ -56,6 +56,12 @@ CMD_FILE = 'file'
 CMD_FILETO = 'fileto'
 CMD_UNCHAT = 'unchat'
 CMD_CONFIG = 'config'
+CMD_PRESENCE = 'presence'
+CMD_PRESENCE_AWAY = 'away'
+CMD_PRESENCE_ONLINE = 'online'
+CMD_PRESENCE_OFFLINE = 'offline'
+CMD_PRESENCE_AVAILABLE = 'available'
+CMD_PRESENCE_INVISIBLE = 'invisible'
 
 # Configuration commands
 CMD_CFG_SET = 'set'
@@ -77,8 +83,8 @@ class Commands(object):
                          'Quits application or an internal environment.',
                          optional_arguments=1,
                          sub_commands=[
-                            self.pack_command(CMD_QUIT_APP,
-                                              'Quits application directly.')
+                            self.sub_command(CMD_QUIT_APP,
+                                             'Quits application directly.')
                          ])
 
 
@@ -86,7 +92,7 @@ class Commands(object):
         return iter(self._commands)
 
 
-    def pack_command(self, command, help_, required=0, optional=0):
+    def sub_command(self, command, help_, required=0, optional=0):
         cmd = dict()
 
         cmd[command] = {
@@ -100,8 +106,8 @@ class Commands(object):
 
     def add_command(self, command, help_, sub_commands='', description='',
                     required_arguments=0, optional_arguments=0):
-        cmd = self.pack_command(command, help_, required=required_arguments,
-                                optional=optional_arguments)
+        cmd = self.sub_command(command, help_, required=required_arguments,
+                               optional=optional_arguments)
 
         if sub_commands:
             cmd[command]['sub_commands'] = sub_commands
@@ -259,26 +265,42 @@ class UserCommands(Commands):
         self.add_command(CMD_GROUP, 'Manipulates chat groups.',
                          required_arguments=2,
                          sub_commands=[
-                             self.pack_command(CMD_GROUP_CREATE,
-                                               'Create groups'),
-                             self.pack_command(CMD_GROUP_INVITE,
-                                               'Invite users to group chat'),
-                             self.pack_command(CMD_GROUP_JOIN,
-                                               'Join a group chat')],
+                             self.sub_command(CMD_GROUP_CREATE,
+                                              'Create groups'),
+                             self.sub_command(CMD_GROUP_INVITE,
+                                              'Invite users to group chat'),
+                             self.sub_command(CMD_GROUP_JOIN,
+                                              'Join a group chat')],
                          description='Only a brief description')
 
         self.add_command(CMD_CONTACT, 'Manipulates the user contacts.',
                          required_arguments=1,
                          sub_commands=[
-                             self.pack_command(CMD_CONTACT_ADD,
-                                               'Adds a contact into the user '
-                                               'list.'),
-                             self.pack_command(CMD_CONTACT_DEL,
-                                               'Deletes a contact from the '
-                                               'user list.'),
-                             self.pack_command(CMD_CONTACT_LIST,
-                                               'List all contacts from the '
-                                               'user list.')
+                             self.sub_command(CMD_CONTACT_ADD,
+                                              'Adds a contact into the user '
+                                              'list.'),
+                             self.sub_command(CMD_CONTACT_DEL,
+                                              'Deletes a contact from the '
+                                              'user list.'),
+                             self.sub_command(CMD_CONTACT_LIST,
+                                              'List all contacts from the '
+                                              'user list.')
+                         ])
+
+        self.add_command(CMD_PRESENCE, 'Sets the user presence to others.',
+                         required_arguments=1,
+                         sub_commands=[
+                             self.sub_command(CMD_PRESENCE_AWAY,
+                                              'Sets presence as away.'),
+                             self.sub_command(CMD_PRESENCE_ONLINE,
+                                              'Sets presence as online.'),
+                             self.sub_command(CMD_PRESENCE_AVAILABLE,
+                                              'Sets presence as available to '
+                                              'chat.'),
+                             self.sub_command(CMD_PRESENCE_OFFLINE,
+                                              'Sets presence as offline.'),
+                             self.sub_command(CMD_PRESENCE_INVISIBLE,
+                                              'Sets presence as invisible.')
                          ])
 
         self.add_command(CMD_FILE, 'Sends a file to the active contact.')
@@ -297,15 +319,15 @@ class ConfigCommands(Commands):
         self.add_command(CMD_CFG_SET, 'Sets a config value.',
                          required_arguments=2,
                          sub_commands=[
-                             self.pack_command(CMD_CFG_SET_USERNAME,
-                                               'Configures the username.'),
-                             self.pack_command(CMD_CFG_SET_PASSWORD,
-                                               'Configures the password.'),
-                             self.pack_command(CMD_CFG_SET_SERVER,
-                                               'Configures the server name.'),
-                             self.pack_command(CMD_CFG_SET_HOST,
-                                               'Configures the server service '
-                                               'host name.'),
+                             self.sub_command(CMD_CFG_SET_USERNAME,
+                                              'Configures the username.'),
+                             self.sub_command(CMD_CFG_SET_PASSWORD,
+                                              'Configures the password.'),
+                             self.sub_command(CMD_CFG_SET_SERVER,
+                                              'Configures the server name.'),
+                             self.sub_command(CMD_CFG_SET_HOST,
+                                              'Configures the server service '
+                                              'host name.'),
                          ])
 
         self.populate_commands()

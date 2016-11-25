@@ -105,7 +105,10 @@ class Input(object):
         :return Returns a dictionary with the command and its arguments such
                 as: {'command': 'help', 'arguments': 'list', 'info': dict}
         """
-        line = raw_input(self._output.parse(self._prompt))
+        try:
+            line = raw_input(self._output.parse(self._prompt))
+        except:
+            return None
 
         # We always have a command beggining the line. At least that's
         # the expected.
