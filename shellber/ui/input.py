@@ -61,18 +61,40 @@ class Input(object):
     """
     A class to handle the input from the user.
     """
-    def __init__(self, output_):
-        self._prompt = PROMPT
-        self.commands = commands.UserCommands()
+    def __init__(self, output_, env):
+        self._prompt = ''
+        self._output = output_
+        self._main_commands = commands.UserCommands()
+        self._cfg_commands = commands.ConfigCommands()
+
+        self.set_prompt()
+        self.update_completer(env)
+        readline.parse_and_bind('tab: complete')
+
+
+    def update_completer(self, env):
+        self.commands = {
+            commands.ENV_MAIN: self._main_commands,
+            commands.ENV_CONFIG: self._cfg_commands
+        }.get(env)
 
         readline.set_completer(
             _Completer(self.commands.supported_commands()).complete)
 
-        readline.parse_and_bind('tab: complete')
 
+    def set_prompt(self, login='', contact='', environment=''):
+        self._prompt = ''
 
-    def change_prompt(self, prefix):
-        self._prompt = prefix + PROMPT
+        if environment:
+            self._prompt += '[${FG_GREEN}%s${FG_RESET}] ' % environment
+
+        if login:
+            self._prompt += '[${FG_CYAN}%s${FG_RESET}] ' % login
+
+        if contact:
+            self._prompt += '<--> [${FG_MAGENTA}%s${FG_RESET}] ' % contact
+
+        self._prompt += PROMPT
 
 
     def readline(self):
@@ -83,7 +105,10 @@ class Input(object):
         :return Returns a dictionary with the command and its arguments such
                 as: {'command': 'help', 'arguments': 'list', 'info': dict}
         """
-        line = raw_input(self._prompt)
+        try:
+            line = raw_input(self._output.parse(self._prompt))
+        except:
+            return None
 
         # We always have a command beggining the line. At least that's
         # the expected.

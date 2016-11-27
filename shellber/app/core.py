@@ -30,7 +30,7 @@ from shellber.ui import input
 from shellber.ui import output
 from shellber.ui import commands
 
-from shellber.xmpp import chat
+from shellber.chat import chat
 
 class Application(object):
     """
@@ -60,16 +60,16 @@ class Application(object):
         self._output = output.Output()
 
         # Start user-input handling
-        self._input = input.Input(self._output)
+        self._env = commands.ENV_MAIN
+        self._input = input.Input(self._output, self._env)
         self._present_credentials()
 
         # Start XMPP handling
-        self._chat = chat.Chat()
+        self._chat = chat.Chat(self.display_received_message)
 
         # Puts the application into the running mode ;-)
         self._args = args
         self._run = True
-        self._ID = ''
 
 
     def _present_credentials(self):
@@ -84,62 +84,72 @@ class Application(object):
         self._output.error("Unsupported command")
 
 
-#    def _validate_command(self, cmd):
-#        try:
-#            self._input.commands.validate(cmd)
-#        except Exception as error:
-#            self._output.error(error)
-#            return False
-#
-#        return True
-
-
     def _help(self, cmd):
         self._output.message(self._input.commands.help(cmd))
 
 
     def _login(self, cmd):
-        if self._input.commands.validate(cmd) is False:
-            self._output.message("${FG_RED}Invalid command.${FG_RESET} "
-                                 "See ${cmd}help${ccmd} for details.")
+        args = cmd.get(input.ARGUMENTS)
 
-            return
+        # No arguments, we'll use the configured account
+        if args is None:
+            # FIXME: We need to improve here... ;-), substitute dictionary
+            #        keys with config constants
+            try:
+                if all(key in self._cfg.account for key in ('username',
+                                                            'password',
+                                                            'server',
+                                                            'host')):
+                    args = self._cfg.account['username'] + " " + \
+                        self._cfg.account['password'] + " " + \
+                        self._cfg.account['server'] + " " + \
+                        self._cfg.account['host']
+                else:
+                    self._output.error("Missing account configuration details. "
+                                       "You may do this through the config "
+                                       "environment. 1")
 
-        args = cmd.get(input.ARGUMENTS).split(' ')
+                    return
+            except:
+                self._output.error("Missing account configuration details. "
+                                   "You may do this through the config "
+                                   "environment. 2")
 
-        if self._chat.login(args) is False:
-            self._output.error("Error while login into the XMPP server.")
-        else:
-            self._ID = '[${FG_CYAN}%s@%s${FG_RESET}]' % \
-                    (self._chat.username, self._chat.server)
+                return
 
-            self._input.change_prompt(self._output.parse('%s ' % self._ID))
+        try:
+            self._chat.login(args.split())
+            self._input.set_prompt(login=self._chat.ID)
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _logout(self, cmd):
-        self._chat.logout()
-        self._ID = ''
-        self._input.change_prompt('')
+        try:
+            self._chat.logout()
+            self._input.set_prompt()
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _start_chat(self, cmd):
-        if self._input.commands.validate(cmd) is False:
-            self._output.message("${FG_RED}Invalid command.${FG_RESET} "
-                                 "See ${cmd}help${ccmd} for details.")
-
-            return
-
-        args = cmd.get(input.ARGUMENTS).split(' ')
+        args = cmd.get(input.ARGUMENTS).split()
         contact = args[0]
-        self._chat.start_chat(contact)
-        self._input.change_prompt(self._output.parse(
-                                  '%s <--> [${FG_MAGENTA}%s${FG_RESET}] ' % \
-                                    (self._ID, contact)))
+
+        try:
+            self._chat.start_chat(contact)
+            self._input.set_prompt(login=self._chat.ID,
+                                   contact=self._chat.contact)
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _stop_chat(self, cmd):
-        self._chat.stop_chat()
-        self._input.change_prompt(self._output.parse('%s ' % self._ID))
+        try:
+            self._chat.stop_chat()
+            self._input.set_prompt(login=self._chat.ID)
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
 
     def _register(self, cmd):
@@ -150,27 +160,137 @@ class Application(object):
         self._chat.unregister()
 
 
-    def _message(self, cmd):
-        self._chat.message()
-
-
     def _group(self, cmd):
-        if self._input.commands.validate(cmd) is False:
-            self._output.message("${FG_RED}Invalid command.${FG_RESET} "
-                                 "See ${cmd}help${ccmd} for details.")
-
-            return
-
         # Are we calling which 'group' sub-command?
-        args = cmd.get(input.ARGUMENTS).split(' ')
+        args = cmd.get(input.ARGUMENTS).split()
 
-        foo = {
-            commands.CMD_GROUP_CREATE: self._chat.group_create,
-            commands.CMD_GROUP_INVITE: self._chat.group_invite,
-            commands.CMD_GROUP_JOIN: self._chat.group_join
-        }.get(args[0], self._unsupported_command)
+        try:
+            if args[0] == commands.CMD_GROUP_CREATE:
+                self._chat.group_create(args[1])
+            elif args[0] == commands.CMD_GROUP_INVITE:
+                self._chat.group_invite(args[1:])
+            elif args[0] == commands.GROUP_JOIN:
+                self._chat.group_join(args[1])
+            else:
+                self._unsupported_command(args)
+        except Exception as error:
+            self._output.error("Error: " + str(error))
 
-        foo(args)
+
+    def _quit(self, cmd):
+        """
+        Quits an application environment or the application itself.
+
+        :param cmd: The command entered by the user.
+        """
+        args = cmd.get(input.ARGUMENTS, 'empty').split()
+        tests = [
+            self._env == commands.ENV_MAIN,
+            args[0] == commands.CMD_QUIT_APP
+        ]
+
+        if any(tests):
+            self._run = False
+        elif self._env == commands.ENV_CONFIG:
+            self._input.set_prompt(login=self._chat.ID,
+                                   contact=self._chat.contact)
+
+            self._env = commands.ENV_MAIN
+            self._input.update_completer(self._env)
+
+
+    def _config(self, cmd):
+        """
+        Enters in the application config environment.
+
+        :param cmd: The command entered by the user.
+        """
+        self._input.set_prompt(login=self._chat.ID, contact=self._chat.contact,
+                               environment='config')
+
+        self._env = commands.ENV_CONFIG
+        self._input.update_completer(self._env)
+
+
+    def _contacts(self, cmd):
+        args = cmd.get(input.ARGUMENTS).split()
+
+        try:
+            if args[0] == commands.CMD_CONTACT_ADD:
+                self._chat.contact_add(args[1])
+            elif args[0] == commands.CMD_CONTACT_DEL:
+                self._chat.contact_del(args[1])
+            elif args[0] == commands.CMD_CONTACT_LIST:
+                self._chat.contact_list()
+            else:
+                self._unsupported_command(args)
+        except Exception as error:
+            self._output.error("Error: " + str(error))
+
+
+    def _file(self, cmd):
+        """
+        Sends a file to the active contact in the chat.
+
+        :param cmd: The command entered by the user.
+        """
+        pass
+
+
+    def _fileto(self, cmd):
+        """
+        Sends a file directly to a specific user or a group. We must receive the
+        first part of the command argument as the user/group name.
+
+        :param cmd: The command entered by the user.
+        """
+        pass
+
+
+    def _message(self, cmd):
+        """
+        Sends a message to the active contact in the chat.
+
+        :param cmd: The command entered by the user.
+        """
+        args = cmd.get(input.ARGUMENTS)
+
+        try:
+            self._chat.message(args)
+        except Exception as error:
+            self._output.error("Error: " + str(error))
+
+
+    def _msgto(self, cmd):
+        """
+        Sends a message directly to a specific user or a group. Here we must
+        receive the first part of the command argument as the user/group name.
+
+        :param cmd: The command entered by the user.
+        """
+        args = cmd.get(input.ARGUMENTS).split(' ', 1)
+
+        try:
+            self._chat.message(args[1], destination=args[0])
+        except Exception as error:
+            self._output.error("Error: " + str(error))
+
+
+    def _cfg_set(self, cmd):
+        args = cmd.get(input.ARGUMENTS).split()
+
+        if hasattr(self._cfg, 'account') is False:
+            self._cfg.account = dict()
+
+        self._cfg.account[args[0]] = args[1]
+
+
+    def _cfg_show(self, *unused):
+        self._output.message(config.display_configurations(self._cfg))
+
+
+    def display_received_message(self, message):
+        pass
 
 
     def run(self):
@@ -192,6 +312,13 @@ class Application(object):
         return self._input.readline()
 
 
+    def sync_configuration(self):
+        """
+        Writes our internal configuration to the application config file.
+        """
+        config.save(self._cfg)
+
+
     def handle_command(self, cmd):
         """
         A function to handle a previously entered command by the user. If the
@@ -200,6 +327,15 @@ class Application(object):
 
         :param cmd: The previously entered command.
         """
+        if len(cmd.get(input.COMMAND)) < 1:
+            return
+
+        try:
+            self._input.commands.validate(cmd)
+        except Exception as error:
+            self._output.error(str(error))
+            return
+
         # A list of actions to take on every supported command
         action = {
             commands.CMD_HELP: self._help,
@@ -210,9 +346,17 @@ class Application(object):
             commands.CMD_GROUP: self._group,
             commands.CMD_CHAT: self._start_chat,
             commands.CMD_UNCHAT: self._stop_chat,
+            commands.CMD_CONFIG: self._config,
+            commands.CMD_CONTACT: self._contacts,
+            commands.CMD_FILE: self._file,
+            commands.CMD_FILETO: self._fileto,
+            commands.CMD_MSG: self._message,
+            commands.CMD_MSGGR: self._msgto,
+            commands.CMD_MSGTO: self._msgto,
+            commands.CMD_CFG_SET: self._cfg_set,
+            commands.CMD_CFG_SHOW: self._cfg_show,
             commands.CMD_CLEAR: output.clear,
-            commands.CMD_QUIT: False,
-            '': True
+            commands.CMD_QUIT: self._quit,
         }.get(cmd[input.COMMAND], self._unsupported_command)
 
         if callable(action):

@@ -42,7 +42,7 @@ def _translate_level(level):
 
 
 def start_log(filename, level):
-    log_format = '%(asctime)s:%(levelname)s:%(process)s:%(module)s:%s(message)s'
+    log_format = '%(asctime)s:%(levelname)s:%(process)s:%(module)s:%(message)s'
     msg_level = _translate_level(level)
     logging.basicConfig(filename=filename, level=msg_level,
                         format=log_format)

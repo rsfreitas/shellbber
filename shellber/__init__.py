@@ -19,7 +19,7 @@
 
 __all__ = [
     'app',
-    'ui',
-    'xmpp'
+    'chat',
+    'ui'
 ]
 

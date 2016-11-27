@@ -18,17 +18,21 @@
 #
 
 """
-A module to handle application chat between users.
+A module to handle chat between users.
 """
 
+import logging
+
 class Chat(object):
-    def __init__(self):
-        self._active_contat = None
+    def __init__(self, handle_received_message):
         self._connected = False
+        self._password = ''
         self.username = ''
         self.server = ''
         self.host = ''
-        self._password = ''
+        self.ID = ''
+        self.contact = ''
+        self._handle_received_message = handle_received_message
 
 
     def register(self):
@@ -40,50 +44,83 @@ class Chat(object):
 
 
     def login(self, args):
-        if len(args) < 3:
-            return False
+        if self._connected:
+            raise Exception("already connected")
 
         self.username = args[0]
         self._password = args[1]
         self.server = args[2]
 
+        # Build the user ID
+        self.ID = self.username + "@" + self.server
+
         if len(args) > 3:
             self.host = args[3]
+            self.ID += "/" + self.host
 
         self._connected = True
-
-        return True
 
 
     def logout(self):
         if self._connected is False:
-            return
+            raise Exception("not connected")
 
         self._connected = False
-        self._active_contact = None
+        self.contact = ''
+        self.ID = ''
 
 
-    def message(self):
+    def message(self, message, destination=''):
+        if self._connected is False:
+            raise Exception("not connected")
+
         pass
 
 
     def start_chat(self, contact):
-        self._active_contact = contact
+        if self._connected is False:
+            raise Exception("not connected")
+
+        self.contact = contact
 
 
     def stop_chat(self):
-        self._active_contact = ''
+        if self._connected is False:
+            raise Exception("not connected")
+
+        self.contact = ''
 
 
-    def group_create(self, cmd):
+    def group_create(self, group_name):
+        if self._connected is False:
+            raise Exception("not connected")
+
         pass
 
 
-    def group_invite(self, cmd):
+    def group_invite(self, users):
+        if self._connected is False:
+            raise Exception("not connected")
+
         pass
 
 
-    def group_join(self, cmd):
+    def group_join(self, group_name):
+        if self._connected is False:
+            raise Exception("not connected")
+
+        pass
+
+
+    def contact_add(self, name):
+        pass
+
+
+    def contact_del(self, name):
+        pass
+
+
+    def contact_list(self):
         pass
 
 

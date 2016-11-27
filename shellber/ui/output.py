@@ -22,6 +22,8 @@ Functions do handle user interface output.
 """
 
 import os
+import logging
+import re
 from string import Template
 
 import colorama
@@ -73,6 +75,15 @@ class Output(object):
         return Template(message).safe_substitute(self._tokens)
 
 
+    def _clear(self, message):
+        """
+        Removes tokens from the string, so we can log it.
+
+        :param message: The original message, containing tokens or not.
+        """
+        return re.sub(r'\$\{[a-zA-Z0-9_]*\}', '', message)
+
+
     def parse(self, message):
         """
         A function to parse a message with known tokens returning a message
@@ -93,6 +104,7 @@ class Output(object):
                         output.
         """
         print self.parse(message)
+        logging.info("%s", self._clear(message))
 
 
 
@@ -104,6 +116,7 @@ class Output(object):
                         output.
         """
         print self.parse("${FG_RED}%s${FG_RESET}" % message)
+        logging.error("%s", self._clear(message))
 
 
 
