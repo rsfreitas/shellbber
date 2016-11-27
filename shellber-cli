@@ -43,6 +43,8 @@ def main():
 #    except Exception as error:
 #        print error
 
+    app.sync_configuration()
+
     return 0
 
 

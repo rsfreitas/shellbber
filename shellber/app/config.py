@@ -19,6 +19,10 @@
 
 import yaml
 
+DEFAULT_LOG_FILENAME = 'shellber.log'
+DEFAULT_LOG_LEVEL = 'debug'
+DEFAULT_CONFIG_FILENAME = 'shellber.yml'
+
 class ConfigParameters(object):
     """
     A class to hold all application parameters loaded/written into the
@@ -37,6 +41,16 @@ class ConfigParameters(object):
 
 
 
+def _create_default_values(parameters):
+    """
+    Function to create default values to internal configurations.
+    """
+    parameters.log_filename = DEFAULT_LOG_FILENAME
+    parameters.log_level = DEFAULT_LOG_LEVEL
+    parameters.filename = DEFAULT_CONFIG_FILENAME
+
+
+
 def load(filename):
     """
     A function to load the application config file into the memory.
@@ -44,23 +58,28 @@ def load(filename):
     :return On success returns a ConfigParameter class with all loaded info or
             None otherwise.
     """
+    cfg_options = ConfigParameters()
+
     try:
         with open(filename) as fd:
             data = fd.read()
     except:
-        return None
+        _create_default_values(cfg_options)
+        return cfg_options
 
-    cfg_options = ConfigParameters()
     cfg_options.filename = filename
 
     try:
         cfg = yaml.load(data)
     except yaml.YAMLError:
-        return None
+        _create_default_values(cfg_options)
+        return cfg_options
 
     cfg_options.log_filename = cfg.get('log_filename')
     cfg_options.log_level = cfg.get('log_level')
-    cfg_options.account = cfg.get('account')
+
+    if cfg.has_key('account'):
+        cfg_options.account = cfg.get('account')
 
     return cfg_options
 
@@ -83,6 +102,26 @@ def save(cfg_options):
                   allow_unicode=True)
 
     return True
+
+
+
+def display_configurations(cfg_options):
+    output = '\n'
+
+    if cfg_options is None:
+        output += 'Empty configurations'
+    else:
+        output += 'Log filename: ' + cfg_options.log_filename + '\n'
+        output += 'Log level: ' + cfg_options.log_level + '\n'
+
+        if hasattr(cfg_options, 'account'):
+            output += '\nAccount details:\n\n'
+            output += ' Username: ' + cfg_options.account['username'] + '\n'
+            output += ' Password: ' + cfg_options.account['password'] + '\n'
+            output += ' Server: ' + cfg_options.account['server'] + '\n'
+            output += ' Service: ' + cfg_options.account['host'] + '\n'
+
+    return output
 
 
 

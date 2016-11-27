@@ -65,11 +65,11 @@ CMD_PRESENCE_INVISIBLE = 'invisible'
 
 # Configuration commands
 CMD_CFG_SET = 'set'
-CMD_CFG_QUIT = 'quit'
 CMD_CFG_SET_USERNAME = 'username'
 CMD_CFG_SET_PASSWORD = 'password'
 CMD_CFG_SET_SERVER = 'server'
 CMD_CFG_SET_HOST = 'host'
+CMD_CFG_SHOW = 'show'
 
 class Commands(object):
     def __init__(self):
@@ -238,8 +238,8 @@ class UserCommands(Commands):
                          description='This command requires at least 3 '
                                      'arguments: username, password and '
                                      'server.\nIt also accepts a 4th '
-                                     'where we pass the hostname of the '
-                                     'service into the server.\n\nExample:\n\n'
+                                     'where we pass the the service name '
+                                     'running on the server.\n\nExample:\n\n'
                                      '  ${cmd}login${ccmd} user password '
                                      'jabber.com [service]\n')
 
@@ -308,7 +308,7 @@ class UserCommands(Commands):
         self.add_command(CMD_REGISTER, 'Register an account.')
         self.add_command(CMD_LOGOUT, 'Makes the logout from a server.')
         self.add_command(CMD_UNCHAT, 'Closes an active chat room.')
-        self.add_command(CMD_CONFIG, 'Enter in config mode.')
+        self.add_command(CMD_CONFIG, 'Enter in configuration mode.')
         self.populate_commands()
 
 
@@ -316,6 +316,7 @@ class UserCommands(Commands):
 class ConfigCommands(Commands):
     def __init__(self):
         super(ConfigCommands, self).__init__()
+        self.add_command(CMD_CFG_SHOW, 'Shows the current configuration.')
         self.add_command(CMD_CFG_SET, 'Sets a config value.',
                          required_arguments=2,
                          sub_commands=[

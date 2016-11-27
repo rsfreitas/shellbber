@@ -65,7 +65,7 @@ class Application(object):
         self._present_credentials()
 
         # Start XMPP handling
-        self._chat = chat.Chat()
+        self._chat = chat.Chat(self.display_received_message)
 
         # Puts the application into the running mode ;-)
         self._args = args
@@ -93,17 +93,28 @@ class Application(object):
 
         # No arguments, we'll use the configured account
         if args is None:
-            if self._cfg.account is None:
-                self._output.error("Missing account configuration")
-                return
-            elif all(key in self._cfg.account for key in ('name', 'pass',
-                                                          'server', 'host')):
-                args = self._cfg.account['name'] + " " + \
-                    self._cfg.account['pass'] + " " + \
-                    self._cfg.account['server'] + " " + \
-                    self._cfg.account['host']
-            else:
-                self._output.error("Missing account configuration details")
+            # FIXME: We need to improve here... ;-), substitute dictionary
+            #        keys with config constants
+            try:
+                if all(key in self._cfg.account for key in ('username',
+                                                            'password',
+                                                            'server',
+                                                            'host')):
+                    args = self._cfg.account['username'] + " " + \
+                        self._cfg.account['password'] + " " + \
+                        self._cfg.account['server'] + " " + \
+                        self._cfg.account['host']
+                else:
+                    self._output.error("Missing account configuration details. "
+                                       "You may do this through the config "
+                                       "environment. 1")
+
+                    return
+            except:
+                self._output.error("Missing account configuration details. "
+                                   "You may do this through the config "
+                                   "environment. 2")
+
                 return
 
         try:
@@ -265,6 +276,23 @@ class Application(object):
             self._output.error("Error: " + str(error))
 
 
+    def _cfg_set(self, cmd):
+        args = cmd.get(input.ARGUMENTS).split()
+
+        if hasattr(self._cfg, 'account') is False:
+            self._cfg.account = dict()
+
+        self._cfg.account[args[0]] = args[1]
+
+
+    def _cfg_show(self, *unused):
+        self._output.message(config.display_configurations(self._cfg))
+
+
+    def display_received_message(self, message):
+        pass
+
+
     def run(self):
         """
         Checks if the application may still run.
@@ -282,6 +310,13 @@ class Application(object):
         :return Returns the command entered by the user.
         """
         return self._input.readline()
+
+
+    def sync_configuration(self):
+        """
+        Writes our internal configuration to the application config file.
+        """
+        config.save(self._cfg)
 
 
     def handle_command(self, cmd):
@@ -318,6 +353,8 @@ class Application(object):
             commands.CMD_MSG: self._message,
             commands.CMD_MSGGR: self._msgto,
             commands.CMD_MSGTO: self._msgto,
+            commands.CMD_CFG_SET: self._cfg_set,
+            commands.CMD_CFG_SHOW: self._cfg_show,
             commands.CMD_CLEAR: output.clear,
             commands.CMD_QUIT: self._quit,
         }.get(cmd[input.COMMAND], self._unsupported_command)

@@ -24,7 +24,7 @@ A module to handle chat between users.
 import logging
 
 class Chat(object):
-    def __init__(self):
+    def __init__(self, handle_received_message):
         self._connected = False
         self._password = ''
         self.username = ''
@@ -32,6 +32,7 @@ class Chat(object):
         self.host = ''
         self.ID = ''
         self.contact = ''
+        self._handle_received_message = handle_received_message
 
 
     def register(self):
